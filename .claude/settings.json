@@ -1,12 +1,4 @@
 {
-  "extraKnownMarketplaces": {
-    "kst": {
-      "source": {
-        "source": "github",
-        "repo": "Keshet-Broadcasting/kst.claude.core"
-      }
-    }
-  },
   "enabledPlugins": {
     "starter@kst": true,
     "auto-deployment@kst": true,

@@ -38,7 +38,7 @@ This project uses **pnpm**. Real scripts live in `package.json`:
 
 For everyday changes: work is not complete until `pnpm typecheck && pnpm lint && pnpm build && pnpm test` all pass. Run them yourself and read the output before reporting done — never claim success on unverified work.
 
-When the app is being sent to Keshet, those four commands are a subordinate step, not the finish line. Work is not done until every required deploy agent has run and approved and the verifier has emitted its sign-off - see "Sending the app to Keshet" below. An agent that could not finish its check reports **not approved**. Fail closed, every time, including when it looks obviously fine.
+When the app is being sent to the platform, those four commands are a subordinate step, not the finish line. Work is not done until every required deploy agent has run and approved and the verifier has emitted its sign-off - see "Sending the app to the platform" below. An agent that could not finish its check reports **not approved**. Fail closed, every time, including when it looks obviously fine.
 
 # Architecture
 
@@ -66,13 +66,13 @@ Rules:
 3. Verify the dev server starts: `pnpm dev`.
 4. If step 1 installed anything, tell the user to **restart Claude Code**.
 
-# Sending the app to Keshet
+# Sending the app to the platform
 
-This applies when the project is a Keshet builder app (the `auto-deployment` plugin is installed). When the user says "deploy", "publish", "ship it", "put it live", or "share it with the team", the deploy chain runs - they never have to name an agent. Load the `deploying-your-app` skill (from the plugin) and follow it: it owns the order of the checks, asks the user the few questions that are theirs all at once at the start, runs the checks without stopping for approval, and sends only after every check has approved. Do not run the checks from memory and do not keep a second copy of the order here - a copy drifts, and a chain assembled from memory is how a check gets skipped.
+This applies when the project is a platform builder app (the `auto-deployment` plugin is installed). When the user says "deploy", "publish", "ship it", "put it live", or "share it with the team", the deploy chain runs - they never have to name an agent. Load the `deploying-your-app` skill (from the plugin) and follow it: it owns the order of the checks, asks the user the few questions that are theirs all at once at the start, runs the checks without stopping for approval, and sends only after every check has approved. Do not run the checks from memory and do not keep a second copy of the order here - a copy drifts, and a chain assembled from memory is how a check gets skipped.
 
-There is no `git push` to Keshet and there is no GitHub. **The deployment service is the only way code reaches Keshet**, it can refuse, and only the verifier may hand work to it. Read the `sharing-your-work` skill (from the plugin) before sending anything, and do not improvise refusal handling.
+There is no `git push` to the platform and there is no GitHub. **The deployment service is the only way code reaches the platform**, it can refuse, and only the verifier may hand work to it. Read the `sharing-your-work` skill (from the plugin) before sending anything, and do not improvise refusal handling.
 
-**Never work out for yourself whether this is the app's first send or a later one.** There is one send, and Keshet decides which it is - this machine cannot know, because a fresh clone has no memory of an earlier deploy. There is also nothing to ask: no name check, no availability lookup. A name that cannot work comes back refused, with nothing created, and the user picks another.
+**Never work out for yourself whether this is the app's first send or a later one.** There is one send, and the platform decides which it is - this machine cannot know, because a fresh clone has no memory of an earlier deploy. There is also nothing to ask: no name check, no availability lookup. A name that cannot work comes back refused, with nothing created, and the user picks another.
 
 # Hygiene
 
@@ -84,7 +84,7 @@ There is no `git push` to Keshet and there is no GitHub. **The deployment servic
 - Never log a secret, and never put one in an error message. Log that a connection succeeded, not what it connected with.
 - Never edit `azure-pipelines.yml` by hand. It is the app's only connection to the platform's security gate; editing it cannot weaken the gate - it can only stop the app deploying at all.
 - Never write a `Dockerfile` expecting it to be used. The platform supplies its own and ignores yours by design.
-- Never hand-edit the `Requester` or `Local agent sign-off` blocks in `DEPLOY_REQUEST.md`. Both come verbatim from the auto-deployment plugin's `templates/DEPLOY_REQUEST.md`, both must be present on every send (Keshet can only stamp a line that exists), both are stamped, and both are re-checked server-side. The `Requester` block is more than a record: it is how Keshet recognises, on every later send, that this app belongs to this user - so editing it can cost them ownership of their own app, not merely fail a check.
+- Never hand-edit the `Requester` or `Local agent sign-off` blocks in `DEPLOY_REQUEST.md`. Both come verbatim from the auto-deployment plugin's `templates/DEPLOY_REQUEST.md`, both must be present on every send (the platform can only stamp a line that exists), both are stamped, and both are re-checked server-side. The `Requester` block is more than a record: it is how the platform recognises, on every later send, that this app belongs to this user - so editing it can cost them ownership of their own app, not merely fail a check.
 
 # Embeds — HARD RULE, no exceptions
 
@@ -112,8 +112,8 @@ writing code in its domain.
 - `state-management-guide` — decision tree for state placement.
 - `css-modules` — design tokens, theming, dark mode.
 - `embeds` — `pnpm embed:add`, custom element lifecycle, `embed.json`.
-- `definition-of-done` (auto-deployment plugin) - what "done" means before reporting work complete, and before sending to Keshet.
+- `definition-of-done` (auto-deployment plugin) - what "done" means before reporting work complete, and before sending to the platform.
 - `database` — the only database: SQLite via Sequelize, UUID ids, JSON columns, a Sequelize migration per schema change.
 - `env-vars` — `.env.local`, `NEXT_PUBLIC_`, zod validation. For anything secret, the `secrets-in-your-app` skill from the auto-deployment plugin wins.
 - `start-with-a-repo` - version history exists from the very first change; fires at the start of building.
-- `sharing-your-work` (auto-deployment plugin) - all version control and sending to Keshet, operated on the user's behalf in plain language.
+- `sharing-your-work` (auto-deployment plugin) - all version control and sending to the platform, operated on the user's behalf in plain language.
