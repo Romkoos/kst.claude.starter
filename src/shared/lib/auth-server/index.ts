@@ -8,7 +8,6 @@ export {
 } from './verify-azure-token';
 export {
   AUTH_USER_HEADER,
-  DEV_AUTH_USER,
   authErrorResponse,
   decodeUser,
   encodeUser,

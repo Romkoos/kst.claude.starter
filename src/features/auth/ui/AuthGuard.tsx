@@ -3,7 +3,7 @@
 import { useEffect, type ReactNode } from 'react';
 import { useIsAuthenticated, useMsal } from '@azure/msal-react';
 import { InteractionStatus } from '@azure/msal-browser';
-import { AUTH_ENABLED, LOGIN_SCOPES, hasAnyRole, type AppRole } from '@/shared/lib/auth-client';
+import { LOGIN_SCOPES, hasAnyRole, type AppRole } from '@/shared/lib/auth-client';
 
 interface AuthGuardProps {
   children: ReactNode;
@@ -25,11 +25,8 @@ interface AuthGuardProps {
  * Wrap a whole area rather than each page. In the App Router the natural place is the layout of
  * a route group — `app/(protected)/layout.tsx` — which guards every route in the group with one
  * declaration and no per-page repetition.
- *
- * When enforcement is off (local dev) the public wrapper below renders children directly, so
- * no sign-in ever fires and the MSAL hooks in `AuthGuardEnforced` never run.
  */
-function AuthGuardEnforced({
+export function AuthGuard({
   children,
   roles = [],
   pending = null,
@@ -60,14 +57,4 @@ function AuthGuardEnforced({
   }
 
   return <>{children}</>;
-}
-
-/**
- * Public guard. Enforcement off → render children directly (local dev, no sign-in).
- * Enforcement on → delegate to `AuthGuardEnforced`. The swap keeps the MSAL hooks out of the
- * render path entirely when auth is disabled.
- */
-export function AuthGuard(props: AuthGuardProps) {
-  if (!AUTH_ENABLED) return <>{props.children}</>;
-  return <AuthGuardEnforced {...props} />;
 }
