@@ -1,4 +1,5 @@
-import { LogLevel, type Configuration } from '@azure/msal-browser';
+import { LogLevel, type Configuration } from "@azure/msal-browser";
+import { environment } from "../../../environments/environment";
 
 /**
  * Browser-side MSAL configuration.
@@ -14,14 +15,29 @@ import { LogLevel, type Configuration } from '@azure/msal-browser';
  * `AuthProvider`'s effect where the error can be caught and rendered as a message.
  */
 
+/**
+ * On deploy the platform generates `src/environments/environment.ts` with the app's own
+ * client id, tenant, redirect URI and API scope — that is the source of truth in production.
+ * `NEXT_PUBLIC_*` variables stay as the local-development fallback, used only when the
+ * generated value is empty.
+ */
+const generated =
+  process.env.NODE_ENV === "production"
+    ? environment.azureAdProd
+    : environment.azureAd;
+
 function publicEnv(name: string): string | undefined {
   // Next inlines NEXT_PUBLIC_* at build time, so these must be referenced literally —
   // `process.env[name]` would return undefined in the browser bundle.
   return {
-    NEXT_PUBLIC_AZURE_AD_CLIENT_ID: process.env.NEXT_PUBLIC_AZURE_AD_CLIENT_ID,
-    NEXT_PUBLIC_AZURE_AD_TENANT_ID: process.env.NEXT_PUBLIC_AZURE_AD_TENANT_ID,
-    NEXT_PUBLIC_AZURE_AD_REDIRECT_URI: process.env.NEXT_PUBLIC_AZURE_AD_REDIRECT_URI,
-    NEXT_PUBLIC_API_SCOPE: process.env.NEXT_PUBLIC_API_SCOPE,
+    NEXT_PUBLIC_AZURE_AD_CLIENT_ID:
+      generated.clientId || process.env.NEXT_PUBLIC_AZURE_AD_CLIENT_ID,
+    NEXT_PUBLIC_AZURE_AD_TENANT_ID:
+      generated.tenantId || process.env.NEXT_PUBLIC_AZURE_AD_TENANT_ID,
+    NEXT_PUBLIC_AZURE_AD_REDIRECT_URI:
+      generated.redirectUri || process.env.NEXT_PUBLIC_AZURE_AD_REDIRECT_URI,
+    NEXT_PUBLIC_API_SCOPE:
+      generated.apiScope || process.env.NEXT_PUBLIC_API_SCOPE,
   }[name];
 }
 
@@ -29,8 +45,8 @@ function required(name: string): string {
   const value = publicEnv(name);
   if (!value) {
     throw new Error(
-      `[auth] Missing ${name}. Add it to .env.local and restart the dev server — ` +
-        'NEXT_PUBLIC_* variables are inlined at build time, so a running server will not pick it up.',
+      `[auth] Missing ${name}. Set it in src/environments/environment.ts (generated on deploy) or in .env.local for local dev, then restart — ` +
+        "NEXT_PUBLIC_* variables are inlined at build time, so a running server will not pick it up.",
     );
   }
   return value;
@@ -40,12 +56,12 @@ function required(name: string): string {
 export function buildMsalConfig(): Configuration {
   return {
     auth: {
-      clientId: required('NEXT_PUBLIC_AZURE_AD_CLIENT_ID'),
-      authority: `https://login.microsoftonline.com/${required('NEXT_PUBLIC_AZURE_AD_TENANT_ID')}`,
+      clientId: required("NEXT_PUBLIC_AZURE_AD_CLIENT_ID"),
+      authority: `https://login.microsoftonline.com/${required("NEXT_PUBLIC_AZURE_AD_TENANT_ID")}`,
       // Must be registered as a **SPA** redirect URI on the app registration — not Web.
       // A Web-platform URI makes Entra ID demand a client secret the browser cannot hold.
-      redirectUri: required('NEXT_PUBLIC_AZURE_AD_REDIRECT_URI'),
-      postLogoutRedirectUri: required('NEXT_PUBLIC_AZURE_AD_REDIRECT_URI'),
+      redirectUri: required("NEXT_PUBLIC_AZURE_AD_REDIRECT_URI"),
+      postLogoutRedirectUri: required("NEXT_PUBLIC_AZURE_AD_REDIRECT_URI"),
       // Returning the user to the page they were on after a redirect sign-in is the default
       // in msal-browser v5 (the explicit `navigateToLoginRequestUrl` flag was removed).
     },
@@ -53,7 +69,7 @@ export function buildMsalConfig(): Configuration {
       // localStorage gives silent SSO across tabs and survives a refresh; sessionStorage does
       // neither. The trade-off is that a successful XSS can read the token — which is why the
       // API validates every token independently and nothing is authorized by the client alone.
-      cacheLocation: 'localStorage',
+      cacheLocation: "localStorage",
     },
     system: {
       loggerOptions: {
@@ -70,7 +86,7 @@ export function buildMsalConfig(): Configuration {
  * Scopes for signing in. Keep this to identity scopes only: asking for API scopes at login
  * time turns a routine sign-in into a consent prompt.
  */
-export const LOGIN_SCOPES = ['openid', 'profile', 'User.Read'];
+export const LOGIN_SCOPES = ["openid", "profile", "User.Read"];
 
 /**
  * The scope that produces a token this app's API will accept — `api://<client-id>/<scope>`,
@@ -78,5 +94,5 @@ export const LOGIN_SCOPES = ['openid', 'profile', 'User.Read'];
  * audience against the same registration, so these two must describe the same app.
  */
 export function getApiScopes(): string[] {
-  return [required('NEXT_PUBLIC_API_SCOPE')];
+  return [required("NEXT_PUBLIC_API_SCOPE")];
 }
