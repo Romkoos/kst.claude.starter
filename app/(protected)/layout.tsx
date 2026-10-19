@@ -1,4 +1,3 @@
-import { AuthProvider } from '@/app';
 import { AuthGuard } from '@/features/auth';
 
 /**
@@ -6,14 +5,10 @@ import { AuthGuard } from '@/features/auth';
  * later, which is the property that matters. The group name in parentheses does not appear in
  * any URL; it exists only to give these routes a shared, guarded layout.
  *
- * `AuthProvider` lives here rather than in the root layout so the public pages keep their
- * server-rendered markup and don't wait on MSAL. Anything that needs sign-in goes under this
- * group.
+ * `AuthProvider` is mounted in the root layout, not here: Entra ID sends the user back to the
+ * redirect URI (usually `/`, a public page), and `handleRedirectPromise()` must run there to
+ * finish sign-in. This layout only decides who may see the page.
  */
 export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <AuthProvider>
-      <AuthGuard>{children}</AuthGuard>
-    </AuthProvider>
-  );
+  return <AuthGuard>{children}</AuthGuard>;
 }
